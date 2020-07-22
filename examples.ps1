@@ -5,11 +5,11 @@ $clientId = "***"
 $clientSecret = "***"
 
 #MT4 id
-$tradePlatformId="***"
+$tradePlatformId = "***"
 #  to get it, navigate to https://admin.cplugin.net/TradePlatforms, when click on rename, and get ID from URL end in naviagtion bar
 
 # if settings file exist, override above settings
-if([System.IO.File]::Exists("$PSScriptRoot/settings.ps1")) {
+if ([System.IO.File]::Exists("$PSScriptRoot/settings.ps1")) {
     . "$PSScriptRoot/settings.ps1"
 }
 
@@ -38,26 +38,28 @@ rest_get "/api/TradePlatforms/$tradePlatformId/Ping"
 # rest_get_list "/API/MT4/$tradePlatformId/TradesGet"
 
 
-### close all open orders on account `1000`
+### close all open orders on accounts from the list
 #<#
-$login = 1000
-# 1. get user records details
-$userRecord = rest_get "/API/MT4/$tradePlatformId/UserRecordGet/$login"
-$userRecord
+$logins = @(100,1000)
+foreach ($login in $logins) {
+    # 1. get user records details
+    $userRecord = rest_get "/API/MT4/$tradePlatformId/UserRecordGet/$login"
+    $userRecord
 
-# get all open orders for user's group
-$tradeRecords = (rest_get "/API/MT4/$tradePlatformId/AdmTradesRequest/$($userRecord.group)/true").Where({$_.login -eq $login})
-$tradeRecords | Format-Table
+    # get all open orders for user's group
+    $tradeRecords = (rest_get "/API/MT4/$tradePlatformId/AdmTradesRequest/$($userRecord.group)/true").Where( { $_.login -eq $login })
+    $tradeRecords | Format-Table
 
-foreach ($tr in $tradeRecords) {
+    foreach ($tr in $tradeRecords) {
 
-    $tradeTransactionType = 'BrClose'
+        $tradeTransactionType = 'BrClose'
 
-    # pending orders to be deleted, instead of closing
-    if($tr.tradeCommand -in @('BuyLimit', 'SellLimit', 'BuyStop', 'SellStop')){
-        $tradeTransactionType = 'BrDelete'
+        # pending orders to be deleted, instead of closing
+        if ($tr.tradeCommand -in ('BuyLimit','SellLimit','BuyStop','SellStop')) {
+            $tradeTransactionType = 'BrDelete'
+        }
+
+        rest_post -url "/api/MT4/$tradePlatformId/TradeTransaction" -data "{'tradeTransactionType':'$tradeTransactionType', 'tradeCommand':'$($tr.tradeCommand)', 'orderBy':$($tr.login), 'price':$($tr.closePrice), 'symbol':'$($tr.symbol)', 'volume':$($tr.volume), 'order':$($tr.order)}"
     }
-
-    rest_post -url "/api/MT4/$tradePlatformId/TradeTransaction" -data "{'tradeTransactionType':'BrClose', 'tradeCommand':'$($tr.tradeCommand)', 'orderBy':$($tr.login), 'price':$($tr.closePrice), 'symbol':'$($tr.symbol)', 'volume':$($tr.volume), 'order':$($tr.order)}"
 }
 #>
