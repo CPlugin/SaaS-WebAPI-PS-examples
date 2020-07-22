@@ -1,12 +1,16 @@
 #clear
-using namespace IdentityModel.Client;
-using namespace System.Net.Http;
+#using namespace IdentityModel.Client;
+#using namespace System.Net.Http;
 $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 
+if($null -eq $PSScriptRoot){
+    $PSScriptRoot = [System.IO.Directory]::GetCurrentDirectory()
+    #$PSScriptRoot
+}
 [Reflection.Assembly]::LoadWithPartialName("System.Net.Http")
-[Reflection.Assembly]::LoadFile($PSScriptRoot + "\Newtonsoft.Json.dll")
-[Reflection.Assembly]::LoadFile($PSScriptRoot + "\IdentityModel.dll")
+[Reflection.Assembly]::LoadFile($PSScriptRoot + "/Newtonsoft.Json.dll")
+[Reflection.Assembly]::LoadFile($PSScriptRoot + "/IdentityModel.dll")
 
 ########################### helper functions ##########################
 function authAsClient($clientId, $clientSecret) {
@@ -18,14 +22,14 @@ function authAsClient($clientId, $clientSecret) {
         $env:SaaSIdSrv = "https://auth.cplugin.net"
     }
 
-    [HttpClientHandler]$handler = New-Object 'HttpClientHandler'
+    [System.Net.Http.HttpClientHandler]$handler = New-Object 'System.Net.Http.HttpClientHandler'
 
     "==> authenticating against $($env:SaaSIdSrv)..." | Write-Host -BackgroundColor Green
-    $client = [TokenClient]::new("$($env:SaaSIdSrv)/connect/token", $clientId, $clientSecret, $handler, [AuthenticationStyle]::BasicAuthentication)
+    $client = [IdentityModel.Client.TokenClient]::new("$($env:SaaSIdSrv)/connect/token", $clientId, $clientSecret, $handler, [IdentityModel.Client.AuthenticationStyle]::BasicAuthentication)
     #"client.Address: $($client.Address)" | Write-Host
     # | Write-Host -BackgroundColor Green
 
-    [TokenResponse]$authResult = [TokenClientExtensions]::RequestClientCredentialsAsync($client, "webapi").GetAwaiter().GetResult()
+    [IdentityModel.Client.TokenResponse]$authResult = [IdentityModel.Client.TokenClientExtensions]::RequestClientCredentialsAsync($client, "webapi").GetAwaiter().GetResult()
     #.Result
     #.GetAwaiter().GetResult()
 
@@ -70,7 +74,7 @@ Function rest_get {
         [parameter(Mandatory = $true,
             ValueFromPipelineByPropertyName = $true,
             ValueFromPipeline = $true)]
-        [String]$Url = ""
+        [string]$Url = ""
     )
 
     if ($env:SaaSWebAPI -eq $null) {

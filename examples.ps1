@@ -1,4 +1,4 @@
-. "$PSScriptRoot/helpers.ps1"
+. ./helpers.ps1
 
 #webapi
 $clientId = "***"
@@ -55,7 +55,7 @@ foreach ($login in $logins) {
         $tradeTransactionType = 'BrClose'
 
         # pending orders to be deleted, instead of closing
-        if ($tr.tradeCommand -in ('BuyLimit','SellLimit','BuyStop','SellStop')) {
+        if (('BuyLimit','SellLimit','BuyStop','SellStop').Contains($tr.tradeCommand)) {
             $tradeTransactionType = 'BrDelete'
         }
 
