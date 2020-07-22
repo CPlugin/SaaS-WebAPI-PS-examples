@@ -6,6 +6,7 @@ $clientSecret = "***"
 
 #MT4 id
 $tradePlatformId="***"
+#  to get it, navigate to https://admin.cplugin.net/TradePlatforms, when click on rename, and get ID from URL end in naviagtion bar
 
 # if settings file exist, override above settings
 if([System.IO.File]::Exists("$PSScriptRoot/settings.ps1")) {
